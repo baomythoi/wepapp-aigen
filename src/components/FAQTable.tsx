@@ -1,9 +1,20 @@
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, Pencil, Upload, Trash2, Download, Loader2 } from "lucide-react";
+import { FileText, Pencil, Upload, Trash2, Download, Loader2, Plus } from "lucide-react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/components/SessionContextProvider";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 type FAQ = {
   id: string;
@@ -18,6 +29,13 @@ export function FAQTable() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // State cho dialog thêm thủ công
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
+  const [newQuestion, setNewQuestion] = useState("");
+  const [newAnswer, setNewAnswer] = useState("");
+  const [addLoading, setAddLoading] = useState(false);
 
   // Fetch FAQ từ Supabase
   useEffect(() => {
@@ -125,6 +143,36 @@ export function FAQTable() {
     }
   };
 
+  // Thêm thủ công FAQ
+  const handleAddFAQ = async () => {
+    if (!user) return;
+    if (!newQuestion.trim() || !newAnswer.trim()) return;
+    setAddLoading(true);
+    const { error } = await supabase.from("faqs").insert([
+      {
+        user_id: user.id,
+        category: newCategory,
+        question: newQuestion,
+        answer: newAnswer,
+        status: "Active",
+      },
+    ]);
+    if (!error) {
+      // Refetch
+      const { data } = await supabase
+        .from("faqs")
+        .select("id,category,question,answer,status")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+      setFaqs(data as FAQ[]);
+      setShowAddDialog(false);
+      setNewCategory("");
+      setNewQuestion("");
+      setNewAnswer("");
+    }
+    setAddLoading(false);
+  };
+
   return (
     <div className="bg-white border rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
@@ -152,6 +200,55 @@ export function FAQTable() {
             className="hidden"
             onChange={handleUploadTemplate}
           />
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="default" className="flex items-center gap-1">
+                <Plus className="w-4 h-4" />
+                Thêm câu hỏi
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Thêm câu hỏi mới</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <Input
+                  placeholder="Chủ đề (category)"
+                  value={newCategory}
+                  onChange={e => setNewCategory(e.target.value)}
+                />
+                <Input
+                  placeholder="Câu hỏi"
+                  value={newQuestion}
+                  onChange={e => setNewQuestion(e.target.value)}
+                  required
+                />
+                <Textarea
+                  placeholder="Câu trả lời"
+                  value={newAnswer}
+                  onChange={e => setNewAnswer(e.target.value)}
+                  required
+                  rows={4}
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  onClick={handleAddFAQ}
+                  disabled={addLoading || !newQuestion.trim() || !newAnswer.trim()}
+                >
+                  {addLoading ? (
+                    <Loader2 className="animate-spin w-4 h-4 mr-2" />
+                  ) : null}
+                  Lưu
+                </Button>
+                <DialogClose asChild>
+                  <Button variant="outline" type="button">
+                    Hủy
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       <div className="overflow-x-auto">
