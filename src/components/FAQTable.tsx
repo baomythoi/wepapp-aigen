@@ -54,7 +54,13 @@ export function FAQTable() {
 
   // Tải file mẫu
   const handleDownloadTemplate = () => {
-    window.open("/faq-template.xlsx", "_blank");
+    // Tải file về thay vì mở tab mới
+    const link = document.createElement("a");
+    link.href = "/faq-template.xlsx";
+    link.download = "faq-template.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Upload file Excel và thêm hàng loạt vào Supabase
