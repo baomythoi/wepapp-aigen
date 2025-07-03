@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Facebook, Instagram, Plus, LogIn, Search, FileText, BarChart2 } from "lucide-react";
+import { Facebook, Instagram, Plus, LogOut, Search, FileText, BarChart2 } from "lucide-react";
 import { PlanStatusCard } from "@/components/PlanStatusCard";
 import { FAQTable } from "@/components/FAQTable";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/components/SessionContextProvider";
+import { useNavigate } from "react-router-dom";
 
 type Channel = {
   id: string;
@@ -37,6 +40,8 @@ export default function Dashboard() {
   const [channels, setChannels] = useState<Channel[]>(initialChannels);
   const [search, setSearch] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const { user } = useSession();
+  const navigate = useNavigate();
 
   // Plan/quota state (mocked for now)
   const plan = "Free";
@@ -62,6 +67,12 @@ export default function Dashboard() {
     } else {
       window.location.href = INSTAGRAM_WEBHOOK_URL;
     }
+  };
+
+  // Đăng xuất
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -95,9 +106,9 @@ export default function Dashboard() {
           </ul>
         </nav>
         <div className="mt-8">
-          <Button className="w-full flex items-center gap-2" variant="outline">
-            <LogIn className="w-4 h-4" />
-            Facebook Login
+          <Button className="w-full flex items-center gap-2" variant="outline" onClick={handleLogout}>
+            <LogOut className="w-4 h-4" />
+            Log out
           </Button>
         </div>
         <div className="mt-6">
