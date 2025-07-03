@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 type FAQ = {
   id: string;
@@ -38,18 +39,25 @@ export function FAQTable() {
   const [addLoading, setAddLoading] = useState(false);
 
   // Fetch FAQ từ Supabase
-  useEffect(() => {
+  const fetchFaqs = async () => {
     if (!user) return;
     setLoading(true);
-    supabase
+    const { data, error } = await supabase
       .from("faqs")
       .select("id,category,question,answer,status")
       .eq("user_id", user.id)
-      .order("created_at", { ascending: true })
-      .then(({ data, error }) => {
-        if (!error && data) setFaqs(data as FAQ[]);
-        setLoading(false);
-      });
+      .order("created_at", { ascending: true });
+    if (error) {
+      toast.error("Lỗi khi tải dữ liệu FAQ: " + error.message);
+    } else {
+      setFaqs(data as FAQ[]);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchFaqs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Tải file mẫu
@@ -71,37 +79,44 @@ export function FAQTable() {
     reader.onload = async (evt) => {
       const data = evt.target?.result;
       if (!data) return;
-      const workbook = XLSX.read(data, { type: "binary" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as string[][];
-      const [header, ...body] = rows;
-      const colIdx = {
-        category: header.findIndex((h) => h.toLowerCase() === "category"),
-        question: header.findIndex((h) => h.toLowerCase() === "question"),
-        answer: header.findIndex((h) => h.toLowerCase() === "answer"),
-      };
-      const newFaqs = body
-        .filter((row) => row[colIdx.question] && row[colIdx.answer])
-        .map((row) => ({
-          user_id: user.id,
-          category: row[colIdx.category] || "",
-          question: row[colIdx.question] || "",
-          answer: row[colIdx.answer] || "",
-          status: "Active",
-        }));
-      if (newFaqs.length > 0) {
-        setLoading(true);
-        const { error } = await supabase.from("faqs").insert(newFaqs);
-        if (!error) {
-          // Refetch
-          const { data } = await supabase
-            .from("faqs")
-            .select("id,category,question,answer,status")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: true });
-          setFaqs(data as FAQ[]);
+      try {
+        const workbook = XLSX.read(data, { type: "binary" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as string[][];
+        const [header, ...body] = rows;
+        const colIdx = {
+          category: header.findIndex((h) => typeof h === "string" && h.toLowerCase() === "category"),
+          question: header.findIndex((h) => typeof h === "string" && h.toLowerCase() === "question"),
+          answer: header.findIndex((h) => typeof h === "string" && h.toLowerCase() === "answer"),
+        };
+        if (colIdx.question === -1 || colIdx.answer === -1) {
+          toast.error("File mẫu thiếu cột 'question' hoặc 'answer'.");
+          return;
         }
-        setLoading(false);
+        const newFaqs = body
+          .filter((row) => row[colIdx.question] && row[colIdx.answer])
+          .map((row) => ({
+            user_id: user.id,
+            category: row[colIdx.category] || "",
+            question: row[colIdx.question] || "",
+            answer: row[colIdx.answer] || "",
+            status: "Active",
+          }));
+        if (newFaqs.length > 0) {
+          setLoading(true);
+          const { error } = await supabase.from("faqs").insert(newFaqs);
+          if (error) {
+            toast.error("Lỗi khi thêm FAQ từ file: " + error.message);
+          } else {
+            toast.success("Thêm FAQ từ file thành công!");
+            await fetchFaqs();
+          }
+          setLoading(false);
+        } else {
+          toast.error("Không có dữ liệu hợp lệ trong file.");
+        }
+      } catch (err: any) {
+        toast.error("Lỗi đọc file: " + (err?.message || "Không xác định"));
       }
       if (fileInputRef.current) fileInputRef.current.value = "";
     };
@@ -116,18 +131,17 @@ export function FAQTable() {
     const newAnswer = prompt("Cập nhật câu trả lời:", faq.answer);
     if (newQuestion !== null && newAnswer !== null) {
       setLoading(true);
-      await supabase
+      const { error } = await supabase
         .from("faqs")
         .update({ question: newQuestion, answer: newAnswer })
         .eq("id", id)
         .eq("user_id", user.id);
-      // Refetch
-      const { data } = await supabase
-        .from("faqs")
-        .select("id,category,question,answer,status")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: true });
-      setFaqs(data as FAQ[]);
+      if (error) {
+        toast.error("Lỗi khi cập nhật FAQ: " + error.message);
+      } else {
+        toast.success("Cập nhật FAQ thành công!");
+        await fetchFaqs();
+      }
       setLoading(false);
     }
   };
@@ -137,22 +151,27 @@ export function FAQTable() {
     if (!user) return;
     if (window.confirm("Bạn có chắc muốn xóa câu hỏi này?")) {
       setLoading(true);
-      await supabase.from("faqs").delete().eq("id", id).eq("user_id", user.id);
-      // Refetch
-      const { data } = await supabase
-        .from("faqs")
-        .select("id,category,question,answer,status")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: true });
-      setFaqs(data as FAQ[]);
+      const { error } = await supabase.from("faqs").delete().eq("id", id).eq("user_id", user.id);
+      if (error) {
+        toast.error("Lỗi khi xóa FAQ: " + error.message);
+      } else {
+        toast.success("Đã xóa FAQ!");
+        await fetchFaqs();
+      }
       setLoading(false);
     }
   };
 
   // Thêm thủ công FAQ
   const handleAddFAQ = async () => {
-    if (!user) return;
-    if (!newQuestion.trim() || !newAnswer.trim()) return;
+    if (!user) {
+      toast.error("Bạn cần đăng nhập để thêm FAQ.");
+      return;
+    }
+    if (!newQuestion.trim() || !newAnswer.trim()) {
+      toast.error("Câu hỏi và câu trả lời không được để trống.");
+      return;
+    }
     setAddLoading(true);
     const { error } = await supabase.from("faqs").insert([
       {
@@ -163,14 +182,11 @@ export function FAQTable() {
         status: "Active",
       },
     ]);
-    if (!error) {
-      // Refetch
-      const { data } = await supabase
-        .from("faqs")
-        .select("id,category,question,answer,status")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: true });
-      setFaqs(data as FAQ[]);
+    if (error) {
+      toast.error("Lỗi khi thêm FAQ: " + error.message);
+    } else {
+      toast.success("Thêm FAQ thành công!");
+      await fetchFaqs();
       setShowAddDialog(false);
       setNewCategory("");
       setNewQuestion("");
