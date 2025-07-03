@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Facebook, Instagram, Plus, LogIn, Search, FileText, BarChart2 } from "lucide-react";
 import { PlanStatusCard } from "@/components/PlanStatusCard";
@@ -30,13 +29,14 @@ const initialChannels: Channel[] = [
   },
 ];
 
+// Thay thế URL webhook thật của bạn tại đây
+const FACEBOOK_WEBHOOK_URL = "https://your-backend.com/webhook/facebook";
+const INSTAGRAM_WEBHOOK_URL = "https://your-backend.com/webhook/instagram";
+
 export default function Dashboard() {
   const [channels, setChannels] = useState<Channel[]>(initialChannels);
   const [search, setSearch] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [newChannelType, setNewChannelType] = useState<"facebook" | "instagram">("facebook");
-  const [newChannelName, setNewChannelName] = useState("");
-  const [newChannelToken, setNewChannelToken] = useState("");
 
   // Plan/quota state (mocked for now)
   const plan = "Free";
@@ -50,26 +50,18 @@ export default function Dashboard() {
       c.type.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Add channel handler
-  const handleAddChannel = () => {
-    if (!newChannelName || !newChannelToken) return;
-    setChannels([
-      ...channels,
-      {
-        id: Math.random().toString(36).slice(2),
-        type: newChannelType,
-        name: newChannelName,
-        token: newChannelToken,
-      },
-    ]);
-    setShowAddDialog(false);
-    setNewChannelName("");
-    setNewChannelToken("");
-  };
-
   // Remove channel handler
   const handleRemoveChannel = (id: string) => {
     setChannels(channels.filter((c) => c.id !== id));
+  };
+
+  // Redirect to webhook
+  const handleConnect = (type: "facebook" | "instagram") => {
+    if (type === "facebook") {
+      window.location.href = FACEBOOK_WEBHOOK_URL;
+    } else {
+      window.location.href = INSTAGRAM_WEBHOOK_URL;
+    }
   };
 
   return (
@@ -137,49 +129,28 @@ export default function Dashboard() {
               <DialogHeader>
                 <DialogTitle>Add New Channel</DialogTitle>
               </DialogHeader>
-              <Tabs value={newChannelType} onValueChange={v => setNewChannelType(v as "facebook" | "instagram")}>
-                <TabsList className="mb-4">
-                  <TabsTrigger value="facebook">
-                    <Facebook className="w-4 h-4 mr-1" /> Facebook Messenger
-                  </TabsTrigger>
-                  <TabsTrigger value="instagram">
-                    <Instagram className="w-4 h-4 mr-1" /> Instagram
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="facebook">
-                  <div className="space-y-4">
-                    <Input
-                      placeholder="Channel Name"
-                      value={newChannelName}
-                      onChange={e => setNewChannelName(e.target.value)}
-                    />
-                    <Input
-                      placeholder="API Token"
-                      value={newChannelToken}
-                      onChange={e => setNewChannelToken(e.target.value)}
-                    />
-                  </div>
-                </TabsContent>
-                <TabsContent value="instagram">
-                  <div className="space-y-4">
-                    <Input
-                      placeholder="Channel Name"
-                      value={newChannelName}
-                      onChange={e => setNewChannelName(e.target.value)}
-                    />
-                    <Input
-                      placeholder="API Token"
-                      value={newChannelToken}
-                      onChange={e => setNewChannelToken(e.target.value)}
-                    />
-                  </div>
-                </TabsContent>
-              </Tabs>
+              <div className="flex gap-4 mb-6 mt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 flex flex-col items-center py-4 border-2 border-blue-600 bg-blue-50 hover:bg-blue-100 transition"
+                  onClick={() => handleConnect("facebook")}
+                >
+                  <Facebook className="w-7 h-7 text-blue-600 mb-1" />
+                  <span className="font-medium text-sm text-blue-700">Facebook Messenger</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 flex flex-col items-center py-4 border-2 border-gray-300 bg-gray-50 hover:bg-gray-100 transition"
+                  onClick={() => handleConnect("instagram")}
+                >
+                  <Instagram className="w-7 h-7 text-gray-500 mb-1" />
+                  <span className="font-medium text-sm text-gray-600">Instagram</span>
+                </Button>
+              </div>
               <DialogFooter>
                 <DialogClose asChild>
                   <Button variant="outline">Cancel</Button>
                 </DialogClose>
-                <Button onClick={handleAddChannel}>Add</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
