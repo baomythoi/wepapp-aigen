@@ -69,7 +69,7 @@ export default function Dashboard() {
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r flex flex-col py-6 px-4">
         <div className="mb-8 flex items-center gap-2">
-          <img src="/logo.svg" alt="Logo" className="h-8 w-8" />
+          <img src="/logo-2.png" alt="Logo" className="h-10 w-10 rounded" />
           <span className="font-bold text-lg">AI Chatbot Dashboard</span>
         </div>
         <nav className="flex-1">
