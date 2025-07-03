@@ -129,23 +129,40 @@ export default function Dashboard() {
               <DialogHeader>
                 <DialogTitle>Add New Channel</DialogTitle>
               </DialogHeader>
-              <div className="flex gap-4 mb-6 mt-2">
-                <Button
-                  variant="outline"
-                  className="flex-1 flex flex-col items-center py-4 border-2 border-blue-600 bg-blue-50 hover:bg-blue-100 transition"
+              <div className="flex flex-col gap-4 my-6">
+                <button
                   onClick={() => handleConnect("facebook")}
+                  className="flex items-center gap-4 px-4 py-3 rounded-lg border border-gray-200 hover:bg-blue-50 transition w-full"
+                  style={{ textAlign: "left" }}
                 >
-                  <Facebook className="w-7 h-7 text-blue-600 mb-1" />
-                  <span className="font-medium text-sm text-blue-700">Facebook Messenger</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 flex flex-col items-center py-4 border-2 border-gray-300 bg-gray-50 hover:bg-gray-100 transition"
+                  <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white">
+                    <Facebook className="w-8 h-8 text-[#1877f3]" />
+                  </span>
+                  <span className="font-medium text-base text-gray-900">Facebook</span>
+                </button>
+                <button
                   onClick={() => handleConnect("instagram")}
+                  className="flex items-center gap-4 px-4 py-3 rounded-lg border border-gray-200 hover:bg-pink-50 transition w-full"
+                  style={{ textAlign: "left" }}
                 >
-                  <Instagram className="w-7 h-7 text-gray-500 mb-1" />
-                  <span className="font-medium text-sm text-gray-600">Instagram</span>
-                </Button>
+                  <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white">
+                    {/* Instagram gradient icon */}
+                    <svg width="32" height="32" viewBox="0 0 32 32">
+                      <defs>
+                        <radialGradient id="ig-gradient" cx="50%" cy="50%" r="80%">
+                          <stop offset="0%" stopColor="#fdf497" />
+                          <stop offset="45%" stopColor="#fdf497" />
+                          <stop offset="60%" stopColor="#fd5949" />
+                          <stop offset="90%" stopColor="#d6249f" />
+                          <stop offset="100%" stopColor="#285AEB" />
+                        </radialGradient>
+                      </defs>
+                      <rect x="0" y="0" width="32" height="32" rx="8" fill="url(#ig-gradient)" />
+                      <path d="M22.5 9.5a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-7a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3h7zm-3.5 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zm0 1.5a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm4.25-.75a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" fill="#fff"/>
+                    </svg>
+                  </span>
+                  <span className="font-medium text-base text-gray-900">Instagram</span>
+                </button>
               </div>
               <DialogFooter>
                 <DialogClose asChild>
