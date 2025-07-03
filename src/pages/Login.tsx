@@ -16,7 +16,14 @@ export default function Login() {
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+      <a href="/" className="mb-8">
+        <img
+          src="/logo-2.png"
+          alt="Logo"
+          className="h-20 w-20 rounded shadow hover:scale-105 transition"
+        />
+      </a>
       <Auth
         supabaseClient={supabase}
         providers={[]}

@@ -1,4 +1,3 @@
-import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
@@ -14,7 +13,6 @@ const Index = () => {
           <Button size="lg" className="px-8 py-4 text-lg">Go to Dashboard</Button>
         </a>
       </div>
-      <MadeWithDyad />
     </div>
   );
 };
