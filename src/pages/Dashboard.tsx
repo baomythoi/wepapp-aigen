@@ -5,6 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Facebook, Instagram, Plus, LogIn, Search, FileText, BarChart2 } from "lucide-react";
+import { PlanStatusCard } from "@/components/PlanStatusCard";
+import { FAQTable } from "@/components/FAQTable";
 
 type Channel = {
   id: string;
@@ -35,6 +37,11 @@ export default function Dashboard() {
   const [newChannelType, setNewChannelType] = useState<"facebook" | "instagram">("facebook");
   const [newChannelName, setNewChannelName] = useState("");
   const [newChannelToken, setNewChannelToken] = useState("");
+
+  // Plan/quota state (mocked for now)
+  const plan = "Free";
+  const quota = 100;
+  const used = 0;
 
   // Filtered channels
   const filteredChannels = channels.filter(
@@ -112,9 +119,12 @@ export default function Dashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-8 bg-gray-50">
+        {/* Plan/Quota Card */}
+        <PlanStatusCard plan={plan} quota={quota} used={used} />
+
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8" id="channels">
           <h1 className="text-2xl font-bold">Channels</h1>
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
@@ -214,7 +224,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Placeholders for Analytics and FAQ */}
+        {/* Analytics Section */}
         <div id="analytics" className="mt-16">
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <BarChart2 className="w-5 h-5 text-purple-600" />
@@ -224,14 +234,10 @@ export default function Dashboard() {
             Analytics dashboard will appear here.
           </div>
         </div>
+
+        {/* FAQ Section */}
         <div id="faq" className="mt-16">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-green-600" />
-            FAQ Management <span className="ml-2 text-xs text-gray-400">(Coming soon)</span>
-          </h2>
-          <div className="bg-white border rounded-lg p-8 text-gray-400 text-center">
-            FAQ upload and management will appear here.
-          </div>
+          <FAQTable />
         </div>
       </main>
     </div>
