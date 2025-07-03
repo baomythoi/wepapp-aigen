@@ -14,30 +14,11 @@ type Channel = {
   id: string;
   type: "facebook" | "instagram";
   name: string;
-  token: string;
 };
 
-const initialChannels: Channel[] = [
-  {
-    id: "1",
-    type: "facebook",
-    name: "Acme FB Page",
-    token: "••••••••••••••••••••••••••••••",
-  },
-  {
-    id: "2",
-    type: "instagram",
-    name: "Acme IG",
-    token: "••••••••••••••••••••••••••••••",
-  },
-];
-
-// Thay thế URL webhook thật của bạn tại đây
-const FACEBOOK_WEBHOOK_URL = "https://your-backend.com/webhook/facebook";
-const INSTAGRAM_WEBHOOK_URL = "https://your-backend.com/webhook/instagram";
-
 export default function Dashboard() {
-  const [channels, setChannels] = useState<Channel[]>(initialChannels);
+  // Bắt đầu với mảng rỗng
+  const [channels, setChannels] = useState<Channel[]>([]);
   const [search, setSearch] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const { user } = useSession();
@@ -60,13 +41,18 @@ export default function Dashboard() {
     setChannels(channels.filter((c) => c.id !== id));
   };
 
-  // Redirect to webhook
-  const handleConnect = (type: "facebook" | "instagram") => {
-    if (type === "facebook") {
-      window.location.href = FACEBOOK_WEBHOOK_URL;
-    } else {
-      window.location.href = INSTAGRAM_WEBHOOK_URL;
-    }
+  // Add channel handler (giả lập)
+  const handleAddChannel = (type: "facebook" | "instagram") => {
+    const name = type === "facebook" ? "Facebook Channel" : "Instagram Channel";
+    setChannels((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString() + Math.random().toString(36).slice(2, 8),
+        type,
+        name,
+      },
+    ]);
+    setShowAddDialog(false);
   };
 
   // Đăng xuất
@@ -142,7 +128,7 @@ export default function Dashboard() {
               </DialogHeader>
               <div className="flex flex-col items-center gap-5 my-8">
                 <button
-                  onClick={() => handleConnect("facebook")}
+                  onClick={() => handleAddChannel("facebook")}
                   className="flex items-center w-80 max-w-full px-6 py-4 rounded-2xl border-2 border-blue-500 bg-white shadow hover:bg-blue-50 hover:shadow-lg transition group"
                   style={{ textAlign: "left" }}
                 >
@@ -152,7 +138,7 @@ export default function Dashboard() {
                   <span className="font-semibold text-lg text-blue-700">Facebook</span>
                 </button>
                 <button
-                  onClick={() => handleConnect("instagram")}
+                  onClick={() => handleAddChannel("instagram")}
                   className="flex items-center w-80 max-w-full px-6 py-4 rounded-2xl border-2 border-pink-400 bg-white shadow hover:bg-pink-50 hover:shadow-lg transition group"
                   style={{ textAlign: "left" }}
                 >
@@ -209,9 +195,6 @@ export default function Dashboard() {
                 )}
                 <span className="font-semibold">{channel.name}</span>
                 <Badge variant="outline" className="ml-auto capitalize">{channel.type}</Badge>
-              </div>
-              <div className="text-xs text-gray-500 mb-2">
-                API Token: <span className="font-mono">{channel.token}</span>
               </div>
               <div className="flex gap-2 mt-auto">
                 <Button size="sm" variant="outline">Edit</Button>
