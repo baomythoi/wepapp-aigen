@@ -127,27 +127,27 @@ export default function Dashboard() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add New Channel</DialogTitle>
+                <DialogTitle className="text-center w-full">Add New Channel</DialogTitle>
               </DialogHeader>
-              <div className="flex flex-col gap-4 my-6">
+              <div className="flex flex-col items-center gap-5 my-8">
                 <button
                   onClick={() => handleConnect("facebook")}
-                  className="flex items-center gap-4 px-4 py-3 rounded-lg border border-gray-200 hover:bg-blue-50 transition w-full"
+                  className="flex items-center w-80 max-w-full px-6 py-4 rounded-2xl border-2 border-blue-500 bg-white shadow hover:bg-blue-50 hover:shadow-lg transition group"
                   style={{ textAlign: "left" }}
                 >
-                  <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white">
-                    <Facebook className="w-8 h-8 text-[#1877f3]" />
+                  <span className="flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 mr-5 group-hover:scale-105 transition">
+                    <Facebook className="w-10 h-10 text-[#1877f3]" />
                   </span>
-                  <span className="font-medium text-base text-gray-900">Facebook</span>
+                  <span className="font-semibold text-lg text-blue-700">Facebook</span>
                 </button>
                 <button
                   onClick={() => handleConnect("instagram")}
-                  className="flex items-center gap-4 px-4 py-3 rounded-lg border border-gray-200 hover:bg-pink-50 transition w-full"
+                  className="flex items-center w-80 max-w-full px-6 py-4 rounded-2xl border-2 border-pink-400 bg-white shadow hover:bg-pink-50 hover:shadow-lg transition group"
                   style={{ textAlign: "left" }}
                 >
-                  <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white">
+                  <span className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-yellow-200 via-pink-200 to-blue-200 mr-5 group-hover:scale-105 transition">
                     {/* Instagram gradient icon */}
-                    <svg width="32" height="32" viewBox="0 0 32 32">
+                    <svg width="40" height="40" viewBox="0 0 32 32">
                       <defs>
                         <radialGradient id="ig-gradient" cx="50%" cy="50%" r="80%">
                           <stop offset="0%" stopColor="#fdf497" />
@@ -161,12 +161,12 @@ export default function Dashboard() {
                       <path d="M22.5 9.5a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-7a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3h7zm-3.5 2a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zm0 1.5a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm4.25-.75a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" fill="#fff"/>
                     </svg>
                   </span>
-                  <span className="font-medium text-base text-gray-900">Instagram</span>
+                  <span className="font-semibold text-lg text-pink-600">Instagram</span>
                 </button>
               </div>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button variant="outline">Cancel</Button>
+                  <Button variant="outline" className="mx-auto w-32">Cancel</Button>
                 </DialogClose>
               </DialogFooter>
             </DialogContent>
