@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
@@ -25,10 +25,35 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const fbLoaded = useFacebookSDK();
 
-  // Plan/quota state (mocked for now)
-  const plan = "Free";
-  const quota = 100;
-  const used = 0;
+  // Plan/quota state
+  const [plan, setPlan] = useState<"Free" | "Pro">("Free");
+  const [daysLeft, setDaysLeft] = useState<number>(30);
+  const [shopCreatedAt, setShopCreatedAt] = useState<string>("");
+
+  // Lấy ngày tạo shop từ Supabase
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("shops")
+      .select("created_at")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (data && data.created_at) {
+          setShopCreatedAt(data.created_at);
+          // Tính số ngày còn lại
+          const created = new Date(data.created_at);
+          const now = new Date();
+          const diff = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+          const left = 30 - diff;
+          setDaysLeft(left > 0 ? left : 0);
+        } else {
+          // Nếu chưa có shop, mặc định 30 ngày
+          setShopCreatedAt("");
+          setDaysLeft(30);
+        }
+      });
+  }, [user]);
 
   // Filtered channels
   const filteredChannels = channels.filter(
@@ -150,20 +175,18 @@ export default function Dashboard() {
             Log out
           </Button>
         </div>
+        {/* Đã bỏ dòng conversations left ở góc trái bên dưới */}
         <div className="mt-6">
           <Badge variant="secondary" className="w-full justify-center py-2">
             Free Plan
           </Badge>
-          <div className="text-xs text-gray-500 mt-2 text-center">
-            100 conversations left
-          </div>
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 p-8 bg-gray-50">
         {/* Plan/Quota Card */}
-        <PlanStatusCard plan={plan} quota={quota} used={used} />
+        <PlanStatusCard plan={plan} daysLeft={daysLeft} createdAt={shopCreatedAt} />
 
         {/* Header */}
         <div className="flex items-center justify-between mb-8" id="channels">

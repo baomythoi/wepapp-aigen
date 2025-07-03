@@ -4,12 +4,12 @@ import { Progress } from "@/components/ui/progress";
 
 type PlanStatusCardProps = {
   plan: "Free" | "Pro";
-  quota: number;
-  used: number;
+  daysLeft: number;
+  createdAt: string;
 };
 
-export function PlanStatusCard({ plan, quota, used }: PlanStatusCardProps) {
-  const percent = Math.min(100, Math.round((used / quota) * 100));
+export function PlanStatusCard({ plan, daysLeft }: PlanStatusCardProps) {
+  const percent = Math.max(0, Math.min(100, Math.round((daysLeft / 30) * 100)));
   return (
     <div className="flex flex-col md:flex-row items-center justify-between bg-white border rounded-lg p-6 mb-8 shadow-sm gap-4">
       <div className="flex items-center gap-4">
@@ -17,13 +17,13 @@ export function PlanStatusCard({ plan, quota, used }: PlanStatusCardProps) {
           {plan} Plan
         </Badge>
         <div className="text-gray-500 text-sm">
-          {quota - used} conversations left
+          {daysLeft > 0 ? `${daysLeft} days left` : "Expired"}
         </div>
       </div>
       <div className="flex-1 flex flex-col gap-2 max-w-xs">
         <Progress value={percent} className="h-2" />
         <div className="text-xs text-gray-400">
-          {used} / {quota} conversations used
+          {daysLeft > 0 ? `${daysLeft} / 30 days remaining` : "Plan expired"}
         </div>
       </div>
       <Button variant="outline" className="ml-0 md:ml-4">Upgrade</Button>
