@@ -9,6 +9,7 @@ import { FAQTable } from "@/components/FAQTable";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/components/SessionContextProvider";
 import { useNavigate } from "react-router-dom";
+import { useFacebookSDK } from "@/hooks/use-facebook-sdk";
 
 type Channel = {
   id: string;
@@ -17,12 +18,12 @@ type Channel = {
 };
 
 export default function Dashboard() {
-  // Bắt đầu với mảng rỗng
   const [channels, setChannels] = useState<Channel[]>([]);
   const [search, setSearch] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const { user } = useSession();
   const navigate = useNavigate();
+  const fbLoaded = useFacebookSDK();
 
   // Plan/quota state (mocked for now)
   const plan = "Free";
@@ -41,8 +42,60 @@ export default function Dashboard() {
     setChannels(channels.filter((c) => c.id !== id));
   };
 
-  // Add channel handler (giả lập)
+  // Đăng nhập Facebook để add page
+  const handleFacebookLogin = () => {
+    if (!fbLoaded || !window.FB) {
+      alert("Facebook SDK chưa sẵn sàng, vui lòng thử lại sau.");
+      return;
+    }
+    window.FB.login(
+      function (response: any) {
+        if (response.authResponse) {
+          // Lấy access token
+          const accessToken = response.authResponse.accessToken;
+          // Lấy thông tin user
+          window.FB.api("/me", { fields: "id,name" }, function (userInfo: any) {
+            // Lấy page user quản lý
+            window.FB.api(
+              "/me/accounts",
+              "GET",
+              {},
+              function (pageInfo: any) {
+                // pageInfo.data là mảng các page user quản lý
+                // Bạn có thể xử lý lưu pageInfo.data vào DB hoặc hiển thị cho user chọn page
+                // Ở đây demo: add channel với tên page đầu tiên
+                if (pageInfo.data && pageInfo.data.length > 0) {
+                  const page = pageInfo.data[0];
+                  setChannels((prev) => [
+                    ...prev,
+                    {
+                      id: page.id,
+                      type: "facebook",
+                      name: page.name,
+                    },
+                  ]);
+                  setShowAddDialog(false);
+                  // TODO: Lưu accessToken/page info vào DB nếu cần
+                } else {
+                  alert("Bạn chưa quản lý page nào trên Facebook.");
+                }
+              }
+            );
+          });
+        } else {
+          alert("Bạn chưa đăng nhập Facebook hoặc đã từ chối quyền.");
+        }
+      },
+      { scope: "pages_show_list,pages_read_engagement,pages_manage_metadata,pages_read_user_content,pages_manage_posts,pages_manage_engagement" }
+    );
+  };
+
+  // Add channel Instagram (giữ nguyên)
   const handleAddChannel = (type: "facebook" | "instagram") => {
+    if (type === "facebook") {
+      handleFacebookLogin();
+      return;
+    }
     const name = type === "facebook" ? "Facebook Channel" : "Instagram Channel";
     setChannels((prev) => [
       ...prev,
