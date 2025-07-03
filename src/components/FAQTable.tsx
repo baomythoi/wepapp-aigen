@@ -1,7 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, Pencil, Upload, Trash2, Download } from "lucide-react";
+import { FileText, Pencil, Upload, Trash2, Download, Loader2 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/components/SessionContextProvider";
 
 type FAQ = {
   id: string;
@@ -11,86 +13,115 @@ type FAQ = {
   status: "Active" | "Draft";
 };
 
-const initialFAQs: FAQ[] = [
-  {
-    id: "1",
-    category: "General",
-    question: "Làm sao để sử dụng chatbot?",
-    answer: "Bạn chỉ cần nhắn tin vào fanpage.",
-    status: "Active",
-  },
-  {
-    id: "2",
-    category: "Product",
-    question: "Chatbot hỗ trợ những gì?",
-    answer: "Chatbot hỗ trợ trả lời tự động các câu hỏi thường gặp.",
-    status: "Draft",
-  },
-];
-
 export function FAQTable() {
-  const [faqs, setFaqs] = useState<FAQ[]>(initialFAQs);
+  const { user } = useSession();
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch FAQ từ Supabase
+  useEffect(() => {
+    if (!user) return;
+    setLoading(true);
+    supabase
+      .from("faqs")
+      .select("id,category,question,answer,status")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true })
+      .then(({ data, error }) => {
+        if (!error && data) setFaqs(data as FAQ[]);
+        setLoading(false);
+      });
+  }, [user]);
 
   // Tải file mẫu
   const handleDownloadTemplate = () => {
     window.open("/faq-template.xlsx", "_blank");
   };
 
-  // Xử lý upload file Excel
-  const handleUploadTemplate = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload file Excel và thêm hàng loạt vào Supabase
+  const handleUploadTemplate = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       const data = evt.target?.result;
       if (!data) return;
       const workbook = XLSX.read(data, { type: "binary" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as string[][];
-      // rows[0] là header
       const [header, ...body] = rows;
       const colIdx = {
         category: header.findIndex((h) => h.toLowerCase() === "category"),
         question: header.findIndex((h) => h.toLowerCase() === "question"),
         answer: header.findIndex((h) => h.toLowerCase() === "answer"),
       };
-      const newFaqs: FAQ[] = body
+      const newFaqs = body
         .filter((row) => row[colIdx.question] && row[colIdx.answer])
-        .map((row, idx) => ({
-          id: `imported-${Date.now()}-${idx}`,
+        .map((row) => ({
+          user_id: user.id,
           category: row[colIdx.category] || "",
           question: row[colIdx.question] || "",
           answer: row[colIdx.answer] || "",
           status: "Active",
         }));
-      setFaqs((prev) => [...prev, ...newFaqs]);
+      if (newFaqs.length > 0) {
+        setLoading(true);
+        const { error } = await supabase.from("faqs").insert(newFaqs);
+        if (!error) {
+          // Refetch
+          const { data } = await supabase
+            .from("faqs")
+            .select("id,category,question,answer,status")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: true });
+          setFaqs(data as FAQ[]);
+        }
+        setLoading(false);
+      }
       if (fileInputRef.current) fileInputRef.current.value = "";
     };
     reader.readAsBinaryString(file);
   };
 
   // Chỉnh sửa FAQ
-  const handleEdit = (id: string) => {
+  const handleEdit = async (id: string) => {
     const faq = faqs.find((f) => f.id === id);
-    if (!faq) return;
+    if (!faq || !user) return;
     const newQuestion = prompt("Cập nhật câu hỏi:", faq.question);
     const newAnswer = prompt("Cập nhật câu trả lời:", faq.answer);
     if (newQuestion !== null && newAnswer !== null) {
-      setFaqs((prev) =>
-        prev.map((f) =>
-          f.id === id
-            ? { ...f, question: newQuestion, answer: newAnswer }
-            : f
-        )
-      );
+      setLoading(true);
+      await supabase
+        .from("faqs")
+        .update({ question: newQuestion, answer: newAnswer })
+        .eq("id", id)
+        .eq("user_id", user.id);
+      // Refetch
+      const { data } = await supabase
+        .from("faqs")
+        .select("id,category,question,answer,status")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+      setFaqs(data as FAQ[]);
+      setLoading(false);
     }
   };
 
   // Xóa FAQ
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    if (!user) return;
     if (window.confirm("Bạn có chắc muốn xóa câu hỏi này?")) {
-      setFaqs((prev) => prev.filter((f) => f.id !== id));
+      setLoading(true);
+      await supabase.from("faqs").delete().eq("id", id).eq("user_id", user.id);
+      // Refetch
+      const { data } = await supabase
+        .from("faqs")
+        .select("id,category,question,answer,status")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+      setFaqs(data as FAQ[]);
+      setLoading(false);
     }
   };
 
@@ -172,7 +203,12 @@ export function FAQTable() {
             ))}
           </tbody>
         </table>
-        {faqs.length === 0 && (
+        {loading && (
+          <div className="flex items-center justify-center py-8 text-gray-400">
+            <Loader2 className="animate-spin mr-2" /> Đang tải dữ liệu...
+          </div>
+        )}
+        {!loading && faqs.length === 0 && (
           <div className="text-center text-gray-400 py-8">Chưa có dữ liệu FAQ.</div>
         )}
       </div>
